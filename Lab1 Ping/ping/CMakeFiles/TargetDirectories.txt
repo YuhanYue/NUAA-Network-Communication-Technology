@@ -1,0 +1,3 @@
+/Users/yuhan/Downloads/ping-master/CMakeFiles/rebuild_cache.dir
+/Users/yuhan/Downloads/ping-master/CMakeFiles/edit_cache.dir
+/Users/yuhan/Downloads/ping-master/CMakeFiles/ping.dir
