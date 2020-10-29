@@ -63,10 +63,10 @@ RM = /Applications/CMake.app/Contents/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Users/yuhan/Downloads/ping-master
+CMAKE_SOURCE_DIR = "/Volumes/OVERAINY/Github/NUAA-Network-Communication-Technology/Lab1 Ping/ping"
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/yuhan/Downloads/ping-master
+CMAKE_BINARY_DIR = "/Volumes/OVERAINY/Github/NUAA-Network-Communication-Technology/Lab1 Ping/ping"
 
 #=============================================================================
 # Directory level rules for the build root directory
@@ -93,14 +93,14 @@ clean: CMakeFiles/ping.dir/clean
 CMakeFiles/ping.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ping.dir/build.make CMakeFiles/ping.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ping.dir/build.make CMakeFiles/ping.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/Users/yuhan/Downloads/ping-master/CMakeFiles --progress-num=1,2 "Built target ping"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir="/Volumes/OVERAINY/Github/NUAA-Network-Communication-Technology/Lab1 Ping/ping/CMakeFiles" --progress-num=1,2 "Built target ping"
 .PHONY : CMakeFiles/ping.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/ping.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/yuhan/Downloads/ping-master/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start "/Volumes/OVERAINY/Github/NUAA-Network-Communication-Technology/Lab1 Ping/ping/CMakeFiles" 2
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/ping.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/yuhan/Downloads/ping-master/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start "/Volumes/OVERAINY/Github/NUAA-Network-Communication-Technology/Lab1 Ping/ping/CMakeFiles" 0
 .PHONY : CMakeFiles/ping.dir/rule
 
 # Convenience name for target.

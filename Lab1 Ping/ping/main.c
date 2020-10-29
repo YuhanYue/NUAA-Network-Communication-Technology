@@ -12,6 +12,7 @@
 #include <string.h>
 #include <netdb.h>
 #include <pthread.h>
+#include <ctype.h>
 
 // 调试模式
 #define DEV_MODE 0
@@ -31,9 +32,10 @@
 
 // 函数声明
 int ping(char *, int, int);
+int validNumber(char *);
 void assembleIcmpPackage(struct icmp *, int, int, pid_t);
 struct timeval getOffsetTime(struct timeval, struct timeval);
-unsigned short getCheckSum(unsigned short *, int);
+unsigned short checkSum(unsigned short *, int);
 
 int main(int argc, char *argv[]) {
     int i;
@@ -46,46 +48,43 @@ int main(int argc, char *argv[]) {
 
     for (i = 2; i < argc; i++) {
         if (!strcmp(argv[i], "-n") && i + 1 < argc) {
-            n = atoi(argv[i + 1]);
+            n = validNumber(argv[i + 1]);
+            //n = atoi(argv[i + 1]);
         }
         if (!strcmp(argv[i], "-l") && i + 1 < argc) {
-            l = atoi(argv[i + 1]);
+            l = validNumber(argv[i + 1]);
+            //l = atoi(argv[i + 1]);
         }
+    }
+
+    //错误提示
+     if (n <= 0)
+    {
+        printf("-n count : you give an incorrect number (<= 0) \n");
+        exit(0);
+    }
+    if (l <= 0)
+    {
+        printf("-l length : you give an incorrect number(>=64 or <= 0)\n");
+        exit(0);
     }
 
     ping(argv[1], n, l);
-
     return 0;
 }
 
-int ping(char *addressArg, int n, int l) {
-    if (DEV_MODE) {
-        printf("n: %d\n", n);
-        printf("l: %d\n", l);
-    }
 
-    char sendBuffer[SEND_BUFFER_SIZE], recvBuffer[RECV_BUFFER_SIZE];
-    memset(sendBuffer, 0, sizeof(sendBuffer));
-    memset(recvBuffer, 0, sizeof(recvBuffer));
+//检查输入参数是否正确
+int validNumber(char *src)
+{
+    int len = strlen(src);
+    for (int i = 0; i < len; i++)
+        if (!isalnum(src[i]))
+            return -1;
+    return atoi(src);
+}
 
-    int count = 0, nt = n == 0 ? 1 : n;
-
-    // 获取进程标识符
-    pid_t pid = getpid();
-
-    // 建立套接字
-    struct protoent* protocol = getprotobyname("icmp");
-    int sock = socket(AF_INET, SOCK_RAW, protocol->p_proto);
-    if (sock < 0) {
-        printf("Can't create socket.\n");
-        return 0;
-    }
-
-    // 设置接收缓冲区大小
-    int recvBufferSize = RECV_BUFFER_SIZE;
-    setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &recvBufferSize, sizeof(recvBufferSize));
-
-    // 改造 ip 地址
+unsigned int IPaddress(char *addressArg) {
     struct sockaddr_in address;
     bzero(&address, sizeof(address));
     address.sin_family = AF_INET;
@@ -102,6 +101,60 @@ int ping(char *addressArg, int n, int l) {
     } else {
         memcpy((char *) &address.sin_addr, &internetAddress, sizeof(internetAddress));
     }
+    internetAddress = address.sin_addr.s_addr;
+
+    return internetAddress;
+
+}
+
+int ping(char *addressArg, int n, int l) {
+    if (DEV_MODE) {
+        printf("n: %d\n", n);
+        printf("l: %d\n", l);
+    }
+
+
+    //发送、接收报文
+    char sendBuffer[SEND_BUFFER_SIZE], recvBuffer[RECV_BUFFER_SIZE];
+    memset(sendBuffer, 0, sizeof(sendBuffer));
+    memset(recvBuffer, 0, sizeof(recvBuffer));
+
+    int count = 0, nt = n == 0 ? 1 : n;
+
+    // 获取进程标识符
+    pid_t pid = getpid();
+
+    // 建立套接字
+    //struct protoent* protocol = getprotobyname("icmp");
+    int sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    if (sock < 0) {
+        printf("Can't create socket.\n");
+        exit(0);
+    }
+
+    // 设置接收缓冲区大小
+    int recvBufferSize = RECV_BUFFER_SIZE;
+    setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &recvBufferSize, sizeof(recvBufferSize));
+
+    // 改造 ip 地址
+    struct sockaddr_in address;
+    bzero(&address, sizeof(address));
+    address.sin_family = AF_INET;
+    unsigned int internetAddress = inet_addr(addressArg);
+    /*
+    if (internetAddress == INADDR_NONE) {
+        // 如果输入的是域名地址
+        struct hostent *host = gethostbyname(addressArg);
+        if (host == NULL) {
+            printf("Fail to get host name.\n");
+            return 0;
+        }
+
+        memcpy((char *) &address.sin_addr, host->h_addr, host->h_length);
+    } else {
+        memcpy((char *) &address.sin_addr, &internetAddress, sizeof(internetAddress));
+    }*/
+    memcpy((char *) &address.sin_addr, &internetAddress, sizeof(internetAddress));
     internetAddress = address.sin_addr.s_addr;
 
     // 输出信息
@@ -272,7 +325,7 @@ void assembleIcmpPackage(struct icmp *header, int sequence, int dataLength, pid_
     }
 
     // 计算校验和
-    header->icmp_cksum = getCheckSum((unsigned short *) header, dataLength + 8);
+    header->icmp_cksum = checkSum((unsigned short *) header, dataLength + 8);
 }
 
 struct timeval getOffsetTime(struct timeval beginTime, struct timeval endTime) {
@@ -289,7 +342,8 @@ struct timeval getOffsetTime(struct timeval beginTime, struct timeval endTime) {
     return offsetTime;
 }
 
-unsigned short getCheckSum(unsigned short *header, int length) {
+
+unsigned short checkSum(unsigned short *header, int length) {
     int count = length;
     int sum = 0;
     unsigned short *t = header;
@@ -311,3 +365,5 @@ unsigned short getCheckSum(unsigned short *header, int length) {
     result = ~sum;
     return result;
 }
+
+

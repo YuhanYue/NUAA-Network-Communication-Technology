@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
-  "/Users/yuhan/Downloads/ping-master/main.c" "/Users/yuhan/Downloads/ping-master/CMakeFiles/ping.dir/main.c.o"
+  "/Volumes/OVERAINY/Github/NUAA-Network-Communication-Technology/Lab1 Ping/ping/main.c" "/Volumes/OVERAINY/Github/NUAA-Network-Communication-Technology/Lab1 Ping/ping/CMakeFiles/ping.dir/main.c.o"
   )
 set(CMAKE_C_COMPILER_ID "AppleClang")
 

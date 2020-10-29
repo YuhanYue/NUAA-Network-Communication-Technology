@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/Users/yuhan/Downloads/ping-master/main.c
+/Volumes/OVERAINY/Github/NUAA-Network-Communication-Technology/Lab1 Ping/ping/main.c
 stdio.h
 -
 stdlib.h
@@ -34,5 +34,7 @@ string.h
 netdb.h
 -
 pthread.h
+-
+ctype.h
 -
 

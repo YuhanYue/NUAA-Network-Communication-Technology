@@ -1,4 +1,4 @@
-# Install script for directory: /Users/yuhan/Downloads/ping-master
+# Install script for directory: /Volumes/OVERAINY/Github/NUAA-Network-Communication-Technology/Lab1 Ping/ping
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -45,5 +45,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/Users/yuhan/Downloads/ping-master/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/Volumes/OVERAINY/Github/NUAA-Network-Communication-Technology/Lab1 Ping/ping/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
