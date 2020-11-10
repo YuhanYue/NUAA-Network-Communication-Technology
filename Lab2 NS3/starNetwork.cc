@@ -63,14 +63,11 @@ main (int argc, char *argv[])
   spokeApps.Start (Seconds (1.0));
   spokeApps.Stop (Seconds (10.0));
 
-  NS_LOG_INFO ("Enable static global routing.");
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 
 
-  NS_LOG_INFO ("Enable pcap tracing.");
   pointToPoint.EnablePcapAll ("star");
 
-  NS_LOG_INFO ("Run Simulation.");
 
 
 

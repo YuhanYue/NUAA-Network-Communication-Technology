@@ -1,3 +1,5 @@
+
+
 # LAB 2 利用NS3部署不同拓扑无线网络
 
 051720205 岳雨涵 1617101班
@@ -102,6 +104,12 @@ sudo apt-get install gwak
 
 gnuplot是根据`ns3`运行时产生的`trace`文件生成图标的软件，可以通过`trace`文件中的数据，使用gwak和throughout.awk（求吞吐量的awk脚本）来求出吞吐量，并使用gnuplot绘图.
 
+```C++
+gawk -f throughout.awk star.tr > star
+cat star//查看是否有数据
+gnuplot>>> plot "star" with lines 
+```
+
 
 
 ##### 4.1.4  安装`wireshark`
@@ -112,7 +120,92 @@ gnuplot是根据`ns3`运行时产生的`trace`文件生成图标的软件，可�
 
 
 
+
+
 ### 4.2 星型网络
+
+#### 4.2.1 代码实现
+
+* 创建nSpoke个节点和ap的点对点连接
+
+```C++
+PointToPointHelper pointToPoint;
+  pointToPoint.SetDeviceAttribute ("DataRate", StringValue ("5Mbps"));
+  pointToPoint.SetChannelAttribute ("Delay", StringValue ("2ms"));
+  PointToPointStarHelper star (nSpokes, pointToPoint);//封装好的class
+```
+
+* 创建网络协议栈
+
+```C++
+  InternetStackHelper internet;
+  star.InstallStack (internet);  
+```
+
+* 分配ip地址
+
+```C++
+star.AssignIpv4Addresses (Ipv4AddressHelper ("10.1.1.0", "255.255.255.0"));
+```
+
+* 创建应用
+
+```C++
+  uint16_t port = 50000;
+  Address hubLocalAddress (InetSocketAddress (Ipv4Address::GetAny (), port));
+  PacketSinkHelper packetSinkHelper ("ns3::TcpSocketFactory", hubLocalAddress);
+  ApplicationContainer hubApp = packetSinkHelper.Install (star.GetHub ());
+  hubApp.Start (Seconds (1.0));
+  hubApp.Stop (Seconds (10.0));
+
+  OnOffHelper onOffHelper ("ns3::TcpSocketFactory", Address ());
+  onOffHelper.SetAttribute ("OnTime", StringValue ("ns3::ConstantRandomVariable[Constant=1]"));
+  onOffHelper.SetAttribute ("OffTime", StringValue ("ns3::ConstantRandomVariable[Constant=0]"));
+
+  ApplicationContainer spokeApps;
+```
+
+
+
+* 给ap添加接口
+
+  ```C++
+  for (uint32_t i = 0; i < star.SpokeCount (); ++i)
+      {
+        AddressValue remoteAddress (InetSocketAddress (star.GetHubIpv4Address (i), port));
+        onOffHelper.SetAttribute ("Remote", remoteAddress);
+        spokeApps.Add (onOffHelper.Install (star.GetSpokeNode (i)));
+  }
+  ```
+
+* 开启路由，因为使用了不同网段
+
+```C++
+Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
+```
+
+
+
+#### 4.2.2 网络拓扑图 
+
+使用`netAnim`打开`star.xml`文件得到网络拓扑图.
+
+![image-20201110195511635](/Users/yuhan/Library/Application Support/typora-user-images/image-20201110195511635.png)
+
+#### 4.2.3吞吐量的计算与绘图  `gwak`+`gnuplot`
+
+在./waf相同目录下运行：
+
+```C++
+gawk -f throughout.awk star.tr > star
+gnuplot>>> plot "star" with lines 
+```
+
+可得到吞吐量的图标表示：
+
+![image-20201110195503313](/Users/yuhan/Library/Application Support/typora-user-images/image-20201110195503313.png)
+
+
 
 
 
@@ -120,20 +213,127 @@ gnuplot是根据`ns3`运行时产生的`trace`文件生成图标的软件，可�
 
 ### 4.3 多跳网络
 
+多跳无线网络没有一个固定的ap，也没有固定的sta，每一个节点都可以成为ap和sta，所以需要建立一个hocwifi网络。整个网络没有固定的基础设施，每个节点都是移动的，每一个节点同时是router，它们能完成发现以及维持到其它节点路由的功能。
+
+#### 4.3.1 代码实现
+
+* 创建信道和物理信息
+
+```C++
+ YansWifiChannelHelper channel = YansWifiChannelHelper::Default ();
+    YansWifiPhyHelper phy = YansWifiPhyHelper::Default ();
+    phy.SetChannel (channel.Create ());
+```
+
+* 创建Wi-Fi
+
+```C++
+WifiHelper wifi;
+    wifi.SetStandard(WIFI_PHY_STANDARD_80211a); 
+    wifi.SetRemoteStationManager("ns3::ConstantRateWifiManager","DataMode",StringValue("OfdmRate6Mbps"));
+```
+
+* 位置信息：设置节点在simulate时移动或静止
+
+```C++
+obilityHelper mobility;
+    mobility.SetPositionAllocator ("ns3::GridPositionAllocator",
+                                     "MinX", DoubleValue (0.0),
+                                     "MinY", DoubleValue (0.0),
+                                     "DeltaX", DoubleValue (5.0),
+                                     "DeltaY", DoubleValue (5.0),
+                                     "GridWidth", UintegerValue (10),
+                                     "LayoutType", StringValue ("RowFirst"));
+ 
+    mobility.SetMobilityModel ("ns3::RandomWalk2dMobilityModel",
+                                 "Bounds", RectangleValue (Rectangle (-500, 500, -500, 500)));
+    mobility.Install (AdHocNode);
+ 
+```
+
+* 安装ip协议栈/分配ip地址/创建应用的服务端，客户端与星型网络相似，不再赘述。
+
+  
+
+#### 4.3.2 网络拓扑图
 
 
-## 5 源码
+
+#### 4.3.3 吞吐量的计算与绘图 `wireshark`
+
+![image-20201110195414823](/Users/yuhan/Library/Application Support/typora-user-images/image-20201110195414823.png)
+
+![image-20201110195435509](/Users/yuhan/Library/Application Support/typora-user-images/image-20201110195435509.png)
+
+
+
+## 附录1 吞吐量计算脚本`throughout.awk`源码
+
+```c++
+//写入
+BEGIN {
+	init=0;
+	cnt = 0;
+	FS="[() \t]";#field seperator is ')' or'('or ' '
+	myScrIP = "10.1.3.5";#This is the link that we pay attention to
+	myDstIP = "10.1.3.1";
+}
+{
+	action = $1;
+	time = $2
+	namespace=$3;
+	#printf("%d\n",NF);
+	for (i=1;i<=NF;i++)#find packet ID
+	{
+		if ($i ~ /id/) #if $i field matches "id"
+           myPacketID = $(i+1);#record the id of the packet for future use
+		else if ($i ~ /length:/) #if $i field matches "length:"
+           myLength =  $(i+1);#record the length of the packet for future use
+		else if ($i ~ />/) #if $i field matches ">"
+		{
+            srcIP = $(i-1);
+            dstIP = $(i+1);
+            if(match(srcIP, myScrIP) && match(dstIP, myDstIP) )#link matches
+            {
+				packet_id = myPacketID;
+                pktsize = myLength;
+                #record send time of the packet
+                if (start_time[packet_id]==0)
+                {
+					start_time[packet_id]=time;
+                }
+                if (action=="r")
+                {
+                     if(end_time_packet[packet_id] ==0 )#the first time we receive this packet
+                    {
+                        end_time_packet[packet_id] = time;#record time according to id
+                        packetCNT[packet_id]=cnt;
+                        pkt_byte_sum[cnt+1]=pkt_byte_sum[cnt]+ pktsize;
+                        end_time[cnt]=time;
+                        cnt++;
+                    }#if(end_time_packet[packet_id] ==0)
+					else#not the 1st time we receive this packet,so we update receive time
+                    {
+                    #printf("*****duplicate packetID: %s,cnt=%s,end_time_old=%s,end_time new: %s\n",packet_id,cnt,end_time[packetCNT[packet_id]], time);
+                      end_time[packetCNT[packet_id]]=time;
+					}
+                }#if (action=="r")
+            }#if match(srcIP, myScrIP)
+
+        }#else if ($i ~ />/) #if $i field matches ">"
+	}#for (i=1;i<=NF;i++)#find packet ID
+}
+
+END {
+        printf("%s\t%s\n", end_time[0], 0);
+        for(j=1 ; j<cnt;j++){
+            throughput = (pkt_byte_sum[j] / (end_time[j] - start_time[0]))*8/1000;
+            printf("%s\t%s\n", end_time[j], throughput );
+        }
+}
+
+```
 
 
 
 
-
-
-
-
-
-
-
-
-
-- 
