@@ -255,11 +255,7 @@ obilityHelper mobility;
 
   
 
-#### 4.3.2 网络拓扑图
-
-
-
-#### 4.3.3 吞吐量的计算与绘图 `wireshark`
+#### 4.3.2 吞吐量的计算与绘图 `wireshark`
 
 ![image-20201110195414823](/Users/yuhan/Library/Application Support/typora-user-images/image-20201110195414823.png)
 
